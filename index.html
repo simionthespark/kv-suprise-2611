@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>For Kaviya</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: one scene at a time, like turning pages of a small black-and-gold book.
+   Black is her favourite colour; gold echoes the golden dress in her photos. */
+:root {
+  --ink: #0a0908;
+  --ink-2: #14110f;
+  --ink-3: #1d1815;
+  --gold: #d6b06a;
+  --gold-soft: #f1dba6;
+  --cream: #f4ead8;
+  --rose: #c98f8f;
+  --muted: #a89c88;
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-script: "Pinyon Script", "Snell Roundhand", cursive;
+  --font-body: "Jost", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--ink); }
+body {
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.55;
+  padding-block: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(214,176,106,.14), transparent 70%),
+    radial-gradient(700px 500px at 100% 100%, rgba(201,143,143,.08), transparent 70%);
+}
+canvas#dust { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+canvas#confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 60; pointer-events: none; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 3px; }
+
+.scene {
+  position: relative; z-index: 1;
+  min-height: 100svh; width: 100%; max-width: 1000px; margin: 0 auto;
+  padding-block: 56px 48px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  text-align: center;
+  opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s ease;
+}
+.scene.in { opacity: 1; transform: none; }
+
+.eyebrow { font-size: 12px; letter-spacing: .32em; text-transform: uppercase; color: var(--gold); font-weight: 400; }
+.lede { font-family: var(--font-display); font-style: italic; font-size: 21px; color: var(--muted); max-width: 30ch; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 30px; border-radius: 999px;
+  border: 1px solid var(--gold); color: var(--gold-soft);
+  font-size: 13px; letter-spacing: .24em; text-transform: uppercase; font-weight: 400;
+  background: linear-gradient(180deg, rgba(214,176,106,.14), rgba(214,176,106,.04));
+  transition: transform .2s ease, background .3s ease, box-shadow .3s ease;
+}
+.btn:hover { background: rgba(214,176,106,.22); box-shadow: 0 0 28px rgba(214,176,106,.25); }
+.btn:active { transform: scale(.97); }
+.btn.solid { background: var(--gold); color: var(--ink); font-weight: 500; }
+.btn.solid:hover { background: var(--gold-soft); }
+
+/* Music toggle */
+#music {
+  position: fixed; z-index: 70;
+  top: calc(env(safe-area-inset-top, 0px) + 12px); right: max(14px, env(safe-area-inset-right, 0px));
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid rgba(214,176,106,.5); background: rgba(10,9,8,.7); backdrop-filter: blur(6px);
+  color: var(--gold-soft); display: grid; place-items: center;
+}
+#music svg { width: 20px; height: 20px; }
+#music[aria-pressed="false"] .wave { display: none; }
+#music[aria-pressed="true"] .slash { display: none; }
+
+/* Lock */
+.lock-card { width: min(100%, 420px); display: flex; flex-direction: column; gap: 16px; align-items: center; }
+.lock-title { font-size: clamp(34px, 9vw, 48px); line-height: 1.1; }
+.lock-title em { font-family: var(--font-script); font-style: normal; color: var(--gold-soft); font-size: 1.25em; }
+.field {
+  width: 100%; padding: 16px 20px; border-radius: 14px; text-align: center;
+  background: var(--ink-2); border: 1px solid rgba(214,176,106,.35); color: var(--cream);
+  font: 400 20px var(--font-display); letter-spacing: .06em;
+}
+.field::placeholder { color: #6f655a; font-style: italic; }
+.clue { min-height: 3.2em; font-family: var(--font-display); font-style: italic; font-size: 19px; color: var(--gold-soft); }
+.linkish { color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 4px; padding: 8px; }
+.shake { animation: shake .45s; }
+@keyframes shake { 20%{transform:translateX(-9px)} 40%{transform:translateX(9px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+
+/* Welcome */
+.welcome-name { font-family: var(--font-script); font-size: clamp(72px, 24vw, 150px); line-height: 1; color: var(--gold-soft);
+  text-shadow: 0 0 40px rgba(214,176,106,.35); padding: 6px 12px; }
+.rule { width: 72px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+
+/* Gate */
+.mascot { font-size: 76px; line-height: 1; transition: transform .3s; }
+.mascot.pop { animation: pop .5s; }
+@keyframes pop { 40% { transform: scale(1.3) rotate(-8deg); } }
+.gate-q { font-size: clamp(30px, 8vw, 44px); line-height: 1.15; max-width: 18ch; }
+.gate-sub { font-family: var(--font-display); font-style: italic; font-size: 19px; color: var(--muted); }
+.gate-msg { min-height: 3.4em; font-family: var(--font-display); font-size: 21px; color: var(--gold-soft); max-width: 26ch; }
+.gate-btns { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.gate .yes {
+  max-width: 100%; border-radius: 999px; background: var(--gold); color: var(--ink); font-weight: 500;
+  font-size: 17px; padding: 12px 22px; line-height: 1.15; letter-spacing: .04em;
+  box-shadow: 0 0 30px rgba(214,176,106,.3); transition: font-size .35s cubic-bezier(.3,1.6,.5,1), padding .35s, min-height .35s;
+  overflow-wrap: anywhere;
+}
+.gate .no { color: var(--muted); font-size: 16px; padding: 10px 16px; border: 1px solid rgba(168,156,136,.4); border-radius: 999px; transition: all .3s; }
+
+/* Gallery */
+.scene.wide { justify-content: flex-start; }
+.title-xl { font-size: clamp(36px, 9vw, 56px); line-height: 1.05; }
+.title-xl em { font-family: var(--font-script); font-style: normal; color: var(--gold-soft); font-size: 1.2em; }
+.polaroids { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; padding: 14px 2px; }
+@media (min-width: 720px) { .polaroids { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 20px; } }
+.polaroid {
+  display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 12px; background: var(--cream); color: #2b241d;
+  border-radius: 3px; box-shadow: 0 14px 30px rgba(0,0,0,.55); transform: rotate(var(--r, 0deg));
+  transition: transform .3s ease, box-shadow .3s; text-align: center;
+}
+.polaroid:hover { transform: rotate(0deg) scale(1.04); z-index: 2; }
+.polaroid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: top; border-radius: 1px; background: #222; display: block; }
+.polaroid .cap { font-family: var(--font-script); font-size: 22px; line-height: 1; color: #3a2f25; }
+.hint { color: var(--muted); font-size: 14px; letter-spacing: .06em; }
+
+/* Lightbox */
+#lightbox { position: fixed; inset: 0; z-index: 80; background: rgba(6,5,4,.96); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  padding: calc(env(safe-area-inset-top, 0px) + 56px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) max(16px, env(safe-area-inset-left, 0px)); text-align: center; }
+#lightbox img { max-width: 100%; max-height: 62svh; border: 8px solid var(--cream); border-bottom-width: 8px; border-radius: 2px; box-shadow: 0 20px 60px rgba(0,0,0,.7); }
+#lightbox .lb-title { font-family: var(--font-script); font-size: 38px; color: var(--gold-soft); line-height: 1.1; }
+#lightbox .lb-line { font-family: var(--font-display); font-style: italic; font-size: 20px; color: var(--cream); max-width: 32ch; }
+.lb-nav { display: flex; gap: 16px; align-items: center; }
+.round { width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(214,176,106,.55); color: var(--gold-soft); font-size: 22px; display: grid; place-items: center; }
+#lbClose { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); left: max(14px, env(safe-area-inset-left, 0px)); }
+
+/* Film */
+.phone { position: relative; width: min(100%, 300px); aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; border: 1px solid rgba(214,176,106,.45);
+  box-shadow: 0 0 60px rgba(214,176,106,.18), 0 24px 50px rgba(0,0,0,.6); background: #000; }
+.phone video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.film-cap { position: absolute; inset: auto 0 0 0; padding: 60px 18px 26px; background: linear-gradient(transparent, rgba(0,0,0,.82)); font-family: var(--font-display); font-style: italic; font-size: 23px; color: var(--cream); opacity: 0; transition: opacity .8s; }
+.film-cap.on { opacity: 1; }
+.play { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.35); transition: opacity .4s; }
+.play span { width: 76px; height: 76px; border-radius: 50%; border: 1px solid var(--gold-soft); display: grid; place-items: center; color: var(--gold-soft); background: rgba(10,9,8,.55); }
+.play svg { width: 30px; height: 30px; margin-left: 4px; }
+.phone.playing .play { opacity: 0; pointer-events: none; }
+
+/* Envelope & letter */
+.env-wrap { width: min(100%, 320px); display: flex; flex-direction: column; align-items: center; gap: 26px; transition: opacity .6s, transform .6s; }
+.env { position: relative; width: 100%; aspect-ratio: 3 / 2; perspective: 900px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.6)); }
+.env .back { position: absolute; inset: 0; background: #2a211a; border-radius: 6px; }
+.env .front { position: absolute; inset: 0; background: linear-gradient(135deg, #3a2d22, #261d16); border-radius: 6px;
+  clip-path: polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%); }
+.env .flap { position: absolute; left: 0; right: 0; top: 0; height: 58%; background: linear-gradient(180deg, #4a392b, #33271d); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top; transition: transform .9s cubic-bezier(.6,0,.3,1), z-index 0s .45s; z-index: 3; }
+.env.open .flap { transform: rotateX(180deg); z-index: 0; }
+.seal { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); z-index: 4; width: 54px; height: 54px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e7c98a, #9c7a3a); color: #3a2a10; display: grid; place-items: center;
+  font: 600 26px var(--font-display); box-shadow: 0 4px 12px rgba(0,0,0,.5); transition: opacity .4s; }
+.env.open .seal { opacity: 0; }
+.env-wrap.gone { opacity: 0; transform: translateY(-20px) scale(.9); pointer-events: none; position: absolute; }
+.paper {
+  width: min(100%, 640px); background: var(--cream); color: #2c241c; text-align: left;
+  padding: 34px clamp(20px, 6vw, 48px) 40px; border-radius: 4px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 0 80px rgba(160,120,60,.12);
+  font-family: var(--font-display); font-size: 21px; line-height: 1.5;
+}
+.paper[hidden] { display: none; }
+.paper .l-title { font-family: var(--font-script); font-size: clamp(34px, 8vw, 46px); line-height: 1.15; margin-bottom: 4px; color: #4a3520; }
+.paper .l-epi { font-style: italic; color: #6a5844; margin-bottom: 22px; }
+.paper .st { white-space: pre-line; margin-bottom: 20px; }
+.paper .st.strong { font-weight: 600; }
+.paper .st.big { font-family: var(--font-script); font-size: 40px; line-height: 1.2; font-weight: 400; color: #4a3520; }
+.paper .st.sign { font-style: italic; color: #6a5844; }
+.paper .caret { display: inline-block; width: 2px; height: 1em; background: #8a6a3a; vertical-align: -2px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.letter-tools { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; min-height: 52px; }
+
+/* Reasons */
+.cards { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (min-width: 720px) { .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
+.flip { perspective: 900px; height: 210px; }
+.flip .in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.4,.1,.2,1); }
+.flip.on .in { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 14px; padding: 16px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.face.front { background: linear-gradient(160deg, var(--ink-3), var(--ink-2)); border: 1px solid rgba(214,176,106,.4); }
+.face.front h3 { font-size: 22px; line-height: 1.15; color: var(--gold-soft); }
+.face.front .orn { color: var(--gold); font-size: 20px; letter-spacing: .3em; }
+.face.back { transform: rotateY(180deg); background: var(--gold); color: #261b0b; font-family: var(--font-display); font-weight: 500; font-size: 18px; line-height: 1.28; }
+.progress { font-size: 13px; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); }
+
+/* Gift */
+.gift { position: relative; width: 190px; height: 190px; margin: 28px auto 10px; animation: wiggle 2.6s ease-in-out infinite; }
+.gift.open { animation: none; }
+.gift .box { position: absolute; left: 10px; right: 10px; bottom: 0; height: 120px; background: linear-gradient(180deg, #1f1a16, #120f0d); border: 1px solid var(--gold); border-radius: 6px; }
+.gift .ribbon-v { position: absolute; left: 50%; bottom: 0; width: 26px; height: 120px; transform: translateX(-50%); background: linear-gradient(90deg, #b88f48, #f1dba6, #b88f48); }
+.gift .lid { position: absolute; left: 0; right: 0; bottom: 108px; height: 46px; background: linear-gradient(180deg, #2a231d, #17120f); border: 1px solid var(--gold); border-radius: 6px; transition: transform .8s cubic-bezier(.3,1.4,.5,1), opacity .8s; transform-origin: left bottom; z-index: 2; }
+.gift .lid::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 26px; transform: translateX(-50%); background: linear-gradient(90deg, #b88f48, #f1dba6, #b88f48); }
+.gift .bow { position: absolute; left: 50%; bottom: 148px; transform: translateX(-50%); font-size: 40px; color: var(--gold-soft); z-index: 3; transition: transform .8s, opacity .8s; line-height: 1; }
+.gift.open .lid { transform: translate(34px, -80px) rotate(24deg); opacity: 0; }
+.gift.open .bow { transform: translate(-50%, -90px) scale(1.3); opacity: 0; }
+@keyframes wiggle { 0%,100% { transform: rotate(0); } 8% { transform: rotate(-3deg); } 16% { transform: rotate(3deg); } 24% { transform: rotate(-2deg); } 32% { transform: rotate(0); } }
+.wish { width: min(100%, 560px); padding: 34px clamp(20px, 6vw, 40px); border-radius: 18px; border: 1px solid rgba(214,176,106,.5); background: linear-gradient(170deg, rgba(214,176,106,.12), rgba(214,176,106,.03)); display: flex; flex-direction: column; gap: 16px; animation: rise 1s ease both; }
+.wish[hidden] { display: none; }
+@keyframes rise { from { opacity: 0; transform: translateY(24px); } }
+.wish .hb { font-family: var(--font-script); font-size: clamp(46px, 13vw, 72px); line-height: 1.05; color: var(--gold-soft); }
+.wish p { font-family: var(--font-display); font-size: 22px; line-height: 1.4; }
+.wish .sig { font-style: italic; color: var(--gold-soft); }
+.row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene { transition: none; transform: none; }
+  .gift { animation: none; }
+  .mascot.pop { animation: none; }
+}
+</style>
+
+</head>
+<body>
+<button id="music" type="button" aria-pressed="true" aria-label="Music on or off" hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><g class="wave"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><path class="slash" d="M17 9l5 6M22 9l-5 6"/></svg>
+</button>
+<canvas id="dust" aria-hidden="true"></canvas>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<!-- LOCK -->
+<section class="scene" id="lock">
+  <div class="lock-card">
+    <span class="eyebrow">Made for Kaviya</span>
+    <h1 class="lock-title">Someone left you<br>a <em>surprise</em></h1>
+    <p class="lede">Say the secret word to open it.</p>
+    <form id="lockForm" style="width:100%;display:flex;flex-direction:column;gap:14px;align-items:center" autocomplete="off">
+      <input class="field" id="secret" type="text" placeholder="secret word" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Secret word">
+      <button class="btn solid" type="submit">Open</button>
+    </form>
+    <p class="clue" id="clue" aria-live="polite">Clue: the name I call you that you like the least.</p>
+    <button class="linkish" id="moreClue" type="button">Need another clue?</button>
+  </div>
+</section>
+
+<!-- WELCOME -->
+<section class="scene" id="welcome" hidden>
+  <span class="eyebrow">Happy Birthday</span>
+  <div class="welcome-name">Kaviya</div>
+  <div class="rule"></div>
+  <p class="lede">A little world made just for you. Memories, smiles, and a few words I never said out loud.</p>
+  <button class="btn solid" id="startBtn" type="button">Start the journey</button>
+  <p class="hint">Soft music is playing. Keep your volume up a little.</p>
+</section>
+
+<!-- MEMORIES -->
+<section class="scene wide" id="memories" hidden>
+  <span class="eyebrow">Chapter one</span>
+  <h2 class="title-xl">Our <em>memories</em></h2>
+  <p class="hint">Tap any photo to open it.</p>
+  <div class="polaroids" id="polaroids"></div>
+  <button class="btn solid" data-go="g2" type="button">Continue</button>
+</section>
+
+<!-- FILM -->
+<section class="scene" id="film" hidden>
+  <span class="eyebrow">Chapter two</span>
+  <h2 class="title-xl">Little moments,<br><em>big memories</em></h2>
+  <div class="phone" id="phone">
+    <video id="filmVideo" src="video/memory-film.mp4" playsinline preload="metadata"></video>
+    <div class="film-cap" id="filmCap"></div>
+    <button class="play" id="playFilm" type="button" aria-label="Play the film"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg></span></button>
+  </div>
+  <div class="row"><button class="btn" id="replayFilm" type="button" hidden>Watch again</button><button class="btn solid" id="afterFilm" data-go="g3" type="button" hidden>Continue</button></div>
+</section>
+
+<!-- LETTER -->
+<section class="scene" id="letter" hidden>
+  <span class="eyebrow" id="letterEyebrow">Chapter three</span>
+  <div class="env-wrap" id="envWrap">
+    <h2 class="title-xl">A letter<br><em>for you</em></h2>
+    <div class="env" id="env" aria-hidden="true"><div class="back"></div><div class="flap"></div><div class="front"></div><div class="seal">K</div></div>
+    <button class="btn solid" id="openLetter" type="button">Open my letter</button>
+  </div>
+  <article class="paper" id="paper" hidden></article>
+  <div class="letter-tools" id="letterTools">
+    <button class="btn" id="skipType" type="button" hidden>Show the whole letter</button>
+    <button class="btn solid" id="afterLetter" data-go="g4" type="button" hidden>Continue</button>
+  </div>
+</section>
+
+<!-- REASONS -->
+<section class="scene wide" id="reasons" hidden>
+  <span class="eyebrow">Chapter four</span>
+  <h2 class="title-xl">12 things that<br>make you <em>special</em></h2>
+  <p class="hint">Tap a card to turn it over.</p>
+  <div class="cards" id="cards"></div>
+  <p class="progress" id="found">0 of 12 found</p>
+  <button class="btn solid" id="afterReasons" data-go="g5" type="button" hidden>Continue</button>
+</section>
+
+<!-- GIFT -->
+<section class="scene" id="gift" hidden>
+  <span class="eyebrow">The last surprise</span>
+  <h2 class="title-xl" id="giftTitle">One more <em>gift</em></h2>
+  <button class="gift" id="giftBox" type="button" aria-label="Open the gift box"><span class="bow">❀</span><span class="lid"></span><span class="box"></span><span class="ribbon-v"></span></button>
+  <p class="hint" id="giftHint">Tap the box.</p>
+  <div class="wish" id="wish" hidden>
+    <div class="hb">Happy Birthday, Kaviya</div>
+    <p>You are one of the most unexpected and precious gifts life has given me.</p>
+    <p>Stay strong. Keep smiling. Keep dreaming. Keep achieving. Never lose the beautiful person you are.</p>
+    <p>And one day, when you stand there as the IAS officer you dream of becoming, I'll be right there, proudly saluting you.</p>
+    <p>And remember, Kannama, somewhere in this world, there's a friend who genuinely wishes to see you happy, successful and smiling.</p>
+    <p class="sig">Your friend, always. ♡</p>
+    <div class="row" style="margin-top:8px"><button class="btn" id="confettiAgain" type="button">More confetti</button><button class="btn" id="replayAll" type="button">Start again</button></div>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo" hidden>
+  <button class="round" id="lbClose" type="button" aria-label="Close">✕</button>
+  <img id="lbImg" alt="">
+  <div class="lb-title" id="lbTitle"></div>
+  <div class="lb-line" id="lbLine"></div>
+  <div class="lb-nav"><button class="round" id="lbPrev" type="button" aria-label="Previous">‹</button><button class="round" id="lbNext" type="button" aria-label="Next">›</button></div>
+</div>
+
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  /* ---------- Scenes ---------- */
+  function show(id) {
+    $$('.scene').forEach(function (s) { s.hidden = s.id !== id; s.classList.remove('in'); });
+    var t = document.getElementById(id);
+    t.hidden = false;
+    musicFor(id);
+    window.scrollTo(0, 0);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.add('in'); }); });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-go]');
+    if (b) show(b.getAttribute('data-go'));
+  });
+
+  /* ---------- Music ---------- */
+  var BG_VOL = 0.4, FRIEND_VOL = 0.5;
+  function mkTrack(src) {
+    var a = new Audio(); a.loop = true; a.preload = 'auto'; a.volume = 0; a.dataset.ok = '';
+    a.addEventListener('canplay', function () { a.dataset.ok = '1'; refreshMusicBtn(); });
+    a.src = src; return a;
+  }
+  var tracks = { araro: mkTrack('music/araro-ariraro.mp3'), nilave: mkTrack('music/nilave-vaa.mp3'), friend: mkTrack('music/friendship-anthem.mp3') };
+  var sceneTrack = { lock: 'araro', welcome: 'araro', g1: 'araro', memories: 'araro', g2: 'araro', film: null, g3: 'araro',
+    letter: 'nilave', g4: 'nilave', reasons: 'nilave', g5: 'nilave', gift: 'nilave' };
+  var current = null, want = null, started = false, musicOn = true;
+  var musicBtn = $('#music');
+  function refreshMusicBtn() { musicBtn.hidden = !(started && (tracks.araro.dataset.ok || tracks.nilave.dataset.ok)); }
+  function fade(a, to, ms, done) {
+    var id = (a._f = (a._f || 0) + 1), from = a.volume, t0 = performance.now();
+    (function step(t) {
+      if (a._f !== id) return;
+      var k = Math.min(1, (t - t0) / ms);
+      a.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      if (k < 1) requestAnimationFrame(step); else if (done) done();
+    })(t0);
+  }
+  function setTrack(name) {
+    want = name;
+    if (!started || current === name) return;
+    var old = current; current = name;
+    if (old) { var o = tracks[old]; fade(o, 0, 1400, function () { if (current !== old) o.pause(); }); }
+    if (name) {
+      var n = tracks[name], p = n.play(); if (p && p.catch) p.catch(function () {});
+      fade(n, name === 'friend' ? FRIEND_VOL : BG_VOL, 2000);
+    }
+  }
+  function musicFor(id) { if (id in sceneTrack) setTrack(sceneTrack[id]); }
+  function startMusic() {
+    if (started) return;
+    started = true;
+    // Unlock the second track while we still have the tap, so it can start later on its own.
+    ['nilave', 'friend'].forEach(function (k) {
+      var n = tracks[k], p = n.play();
+      if (p && p.then) p.then(function () { if (current !== k) n.pause(); }).catch(function () {});
+    });
+    var w = want === null ? 'araro' : want; want = null; setTrack(w);
+    refreshMusicBtn();
+  }
+  musicBtn.addEventListener('click', function () {
+    musicOn = !musicOn;
+    musicBtn.setAttribute('aria-pressed', String(musicOn));
+    Object.keys(tracks).forEach(function (k) { tracks[k].muted = !musicOn; });
+    $('#filmVideo').muted = !musicOn;
+  });
+
+  /* ---------- Dust background ---------- */
+  (function () {
+    var c = $('#dust'), x = c.getContext('2d'), W, H, P = [];
+    function size() { var r = window.devicePixelRatio || 1; W = c.width = innerWidth * r; H = c.height = innerHeight * r; }
+    size(); addEventListener('resize', size);
+    var n = 46;
+    for (var i = 0; i < n; i++) P.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .5, v: Math.random() * .00035 + .00012, a: Math.random() * .5 + .15, h: Math.random() < .12, p: Math.random() * 6 });
+    function draw(t) {
+      x.clearRect(0, 0, W, H);
+      P.forEach(function (p) {
+        p.y -= p.v; if (p.y < -0.05) { p.y = 1.05; p.x = Math.random(); }
+        var px = (p.x + Math.sin(t / 2600 + p.p) * .012) * W, py = p.y * H, r = window.devicePixelRatio || 1;
+        x.globalAlpha = p.a * (.6 + .4 * Math.sin(t / 900 + p.p));
+        x.fillStyle = '#e8c887';
+        if (p.h) { x.font = (12 * r) + 'px serif'; x.fillText('♡', px, py); }
+        else { x.beginPath(); x.arc(px, py, p.r * r, 0, 6.3); x.fill(); }
+      });
+      if (!reduce) requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
+
+  /* ---------- Confetti ---------- */
+  var burst = (function () {
+    var c = $('#confetti'), x = c.getContext('2d'), P = [], W, H, run = false;
+    function size() { var r = window.devicePixelRatio || 1; W = c.width = innerWidth * r; H = c.height = innerHeight * r; }
+    size(); addEventListener('resize', size);
+    var cols = ['#d6b06a', '#f1dba6', '#f4ead8', '#c98f8f', '#ffffff'];
+    function loop() {
+      x.clearRect(0, 0, W, H);
+      P = P.filter(function (p) { return p.y < H + 40 && p.life > 0; });
+      P.forEach(function (p) {
+        p.vy += .22 * p.s; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+        x.save(); x.translate(p.x, p.y); x.rotate(p.rot); x.fillStyle = p.c; x.globalAlpha = Math.min(1, p.life / 40);
+        if (p.t) { x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); } else { x.beginPath(); x.arc(0, 0, p.w / 2, 0, 6.3); x.fill(); }
+        x.restore();
+      });
+      if (P.length) requestAnimationFrame(loop); else run = false;
+    }
+    return function (fx, fy, count) {
+      if (reduce) count = Math.min(count, 14);
+      var r = window.devicePixelRatio || 1;
+      for (var i = 0; i < count; i++) {
+        var ang = Math.random() * Math.PI * 2, sp = (Math.random() * 9 + 3) * r;
+        P.push({ x: fx * r, y: fy * r, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 6 * r, s: r, rot: Math.random() * 6, vr: (Math.random() - .5) * .3,
+          w: (Math.random() * 7 + 4) * r, h: (Math.random() * 10 + 5) * r, c: cols[(Math.random() * cols.length) | 0], t: Math.random() < .7, life: 140 + Math.random() * 80 });
+      }
+      if (!run) { run = true; requestAnimationFrame(loop); }
+    };
+  })();
+
+  /* ---------- Lock ---------- */
+  var secretOk = ['muttakanni', 'muttakkanni'];
+  var secret = $('#secret'), clue = $('#clue'), clueNo = 1;
+  $('#lockForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = secret.value.toLowerCase().replace(/[^a-z]/g, '');
+    if (secretOk.indexOf(v) > -1) { startMusic(); show('welcome'); return; }
+    secret.classList.remove('shake'); void secret.offsetWidth; secret.classList.add('shake');
+    clue.textContent = 'Hmm, that is not it. Try again, I know you can.';
+    setTimeout(function () { clue.textContent = clueNo === 1 ? 'Clue: the name I call you that you like the least.' : 'Clue: the name your Tamil Ayya calls you.'; }, 2200);
+  });
+  $('#moreClue').addEventListener('click', function () {
+    clueNo = 2; clue.textContent = 'Clue: the name your Tamil Ayya calls you.'; $('#moreClue').hidden = true;
+  });
+
+  /* ---------- Welcome ---------- */
+  $('#startBtn').addEventListener('click', function () { startMusic(); show('g1'); });
+
+  /* ---------- Yes / No gates ---------- */
+  var gates = [
+    { id: 'g1', next: 'memories', q: 'Do you want to see some of our memories?', sub: 'A few photos I kept safe for you.', happy: 'Yaaay! Let us go back in time.', sad1: 'Ayyo… you do not want to see the photos? 🥺' },
+    { id: 'g2', next: 'film', q: 'Shall I play a tiny film I made for you?', sub: 'About twenty seconds. Promise.', happy: 'Yesss! Lights, camera, Kaviya!', sad1: 'But there is a video… and you are in it 🥺' },
+    { id: 'g3', next: 'letter', q: 'Do you want to read the letter I wrote?', sub: 'It took me a very long time.', happy: 'Okay. Deep breath. Here it comes.', sad1: 'Not even a little peek? I wrote it myself 🥹' },
+    { id: 'g4', next: 'reasons', q: 'Want to know 12 things that make you special?', sub: 'Some of them might surprise you.', happy: 'I knew you were curious!', sad1: 'Twelve whole reasons and you do not want one? 🥺' },
+    { id: 'g5', next: 'gift', q: 'One last thing. Want to open your gift?', sub: 'A closed box is a sad box.', happy: 'The best part is coming!', sad1: 'The gift box is looking at you right now 🥺' }
+  ];
+  var faces = ['🧸', '🥺', '🥹', '😢', '😭', '😤', '🏃', '😌'];
+  var yesLabels = ['Yes, show me', 'Yes! 🥰', 'YES!!', 'YES, OBVIOUSLY', 'YES YES YES', 'YESSS!!!', 'CLICK ME 😭', 'YES. JUST YES.'];
+  var sadShared = [
+    null,
+    'Please? I worked really hard on this… 🥹',
+    'My heart just made a tiny cracking sound 💔',
+    'Look, the YES button is getting bigger. It really wants to be clicked 😭',
+    'I will tell your Ayya you said no 😤',
+    'The YES button is now taller than my overthinking 😮‍💨',
+    'The No button got scared and is running away 🏃💨',
+    'Fine. Only one option left. 😌'
+  ];
+  gates.forEach(function (g) {
+    var s = document.createElement('section');
+    s.className = 'scene gate'; s.id = g.id; s.hidden = true;
+    s.innerHTML = '<div class="mascot" aria-hidden="true">🧸</div>' +
+      '<h2 class="gate-q"></h2><p class="gate-sub"></p><p class="gate-msg" aria-live="polite"></p>' +
+      '<div class="gate-btns"><button class="yes" type="button"></button><button class="no" type="button">No</button></div>';
+    s.querySelector('.gate-q').textContent = g.q;
+    s.querySelector('.gate-sub').textContent = g.sub;
+    document.body.insertBefore(s, $('#lightbox'));
+    var yes = s.querySelector('.yes'), no = s.querySelector('.no'), msg = s.querySelector('.gate-msg'), face = s.querySelector('.mascot');
+    var n = 0, done = false;
+    yes.textContent = yesLabels[0];
+    function pop() { face.classList.remove('pop'); void face.offsetWidth; face.classList.add('pop'); }
+    no.addEventListener('click', function () {
+      if (done) return;
+      n++;
+      face.textContent = faces[Math.min(n, faces.length - 1)]; pop();
+      msg.textContent = n === 1 ? g.sad1 : sadShared[Math.min(n - 1, sadShared.length - 1)];
+      yes.textContent = yesLabels[Math.min(n, yesLabels.length - 1)];
+      yes.style.fontSize = Math.min(17 + n * 5, 58) + 'px';
+      yes.style.padding = (12 + n * 6) + 'px ' + (22 + n * 8) + 'px';
+      if (n >= 6) { yes.style.width = '100%'; yes.style.minHeight = '36svh'; }
+      no.style.fontSize = Math.max(10, 16 - n * 1.4) + 'px';
+      no.style.opacity = String(Math.max(.25, 1 - n * .11));
+      if (n >= 7) no.hidden = true;
+    });
+    yes.addEventListener('click', function (e) {
+      if (done) return; done = true;
+      face.textContent = '🥳'; pop();
+      msg.textContent = g.happy;
+      var r = yes.getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top + r.height / 2, 60);
+      no.hidden = true;
+      setTimeout(function () { show(g.next); }, 1300);
+    });
+  });
+  // Reset gate state on replay by reloading scenes
+  /* ---------- Gallery ---------- */
+  var photos = [
+    ['p01', 'Golden hours', 'Some people light up a whole room without even trying.', 'Kaviya in a golden silk dress, posing'],
+    ['p02', 'Sparkle mode', 'That playful side of you, always switched on.', 'Kaviya in a golden dress with playful hands by her eyes'],
+    ['p03', 'That smile', 'The kind that makes a hard day a little softer.', 'Kaviya smiling with her hands under her chin'],
+    ['p04', 'Quiet charm', 'No pose needed. You are the moment.', 'Kaviya resting her chin on her hands'],
+    ['p05', 'Hey, cutie', 'Yes, you. Read that twice.', 'Kaviya with a pink heart crown, saying Hey Cutie'],
+    ['p06', 'Hey, cutie (again)', 'Because once was not enough.', 'Kaviya in a black scarf with a heart crown'],
+    ['p07', 'Side by side', 'A friendship nobody planned, and I am so glad it happened.', 'Kaviya and Simion together'],
+    ['p08', 'Through every tide', 'We found our way back, every single time.', 'Kaviya and Simion in black and white'],
+    ['p09', 'Wednesday, 6:10 pm', 'Ordinary moments that turned into memories.', 'Kaviya and Simion on a Wednesday evening'],
+    ['p10', 'Under the night lights', 'You took the lead when I stayed silent.', 'Kaviya and Simion at night'],
+    ['p11', 'Silly is a talent', 'Laugh, cry, complain, be crazy. Just be you.', 'Kaviya with a panda filter, smiling'],
+    ['p12', 'The pout', 'Practised? Probably. Perfect? Definitely.', 'Kaviya pouting in black and white with hearts'],
+    ['p13', 'Soft and steady', 'Even in black and white, you bring the colour.', 'Kaviya smiling in black and white'],
+    ['p14', 'Haldi glow', 'Even like this, you are still the most you.', 'Kaviya with a turmeric face pack']
+  ];
+  var rot = [-3, 2, -1.5, 3, -2.5, 1.5, -1, 2.5, -2, 1, -3, 2, -1.5, 3];
+  var pol = $('#polaroids');
+  photos.forEach(function (p, i) {
+    var b = document.createElement('button');
+    b.className = 'polaroid'; b.type = 'button'; b.style.setProperty('--r', rot[i] + 'deg');
+    b.innerHTML = '<img loading="lazy" src="img/' + p[0] + '.jpg" alt=""><span class="cap"></span>';
+    b.querySelector('img').alt = p[3]; b.querySelector('.cap').textContent = p[1];
+    b.addEventListener('click', function () { openLb(i); });
+    pol.appendChild(b);
+  });
+  var lb = $('#lightbox'), cur = 0;
+  function renderLb() {
+    var p = photos[cur];
+    $('#lbImg').src = 'img/' + p[0] + '.jpg'; $('#lbImg').alt = p[3];
+    $('#lbTitle').textContent = p[1]; $('#lbLine').textContent = p[2];
+  }
+  function openLb(i) { cur = i; renderLb(); lb.hidden = false; $('#lbClose').focus(); }
+  function closeLb() { lb.hidden = true; }
+  function step(d) { cur = (cur + d + photos.length) % photos.length; renderLb(); }
+  $('#lbClose').addEventListener('click', closeLb);
+  $('#lbPrev').addEventListener('click', function () { step(-1); });
+  $('#lbNext').addEventListener('click', function () { step(1); });
+  document.addEventListener('keydown', function (e) {
+    if (lb.hidden) return;
+    if (e.key === 'Escape') closeLb(); if (e.key === 'ArrowLeft') step(-1); if (e.key === 'ArrowRight') step(1);
+  });
+  var tx = null;
+  lb.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend', function (e) {
+    if (tx === null) return; var dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+  });
+  lb.addEventListener('click', function (e) { if (e.target === lb) closeLb(); });
+
+  /* ---------- Film ---------- */
+  var vid = $('#filmVideo'), phone = $('#phone'), capEl = $('#filmCap');
+  var caps = [[0.6, 'Every little moment…'], [5.3, '…every random conversation…'], [10.2, '…every laugh we shared…'], [15.2, '…stays with me.']];
+  function playFilm() {
+    vid.currentTime = 0; vid.muted = !musicOn;
+    setTrack(null);
+    var p = vid.play(); if (p && p.catch) p.catch(function () { vid.muted = true; vid.play(); });
+    phone.classList.add('playing');
+    $('#replayFilm').hidden = true; $('#afterFilm').hidden = true;
+  }
+  function endFilm() {
+    phone.classList.remove('playing'); capEl.classList.remove('on');
+    setTrack('araro');
+    $('#replayFilm').hidden = false; $('#afterFilm').hidden = false;
+  }
+  $('#playFilm').addEventListener('click', playFilm);
+  $('#replayFilm').addEventListener('click', playFilm);
+  vid.addEventListener('ended', endFilm);
+  vid.addEventListener('timeupdate', function () {
+    var t = vid.currentTime, txt = '';
+    for (var i = 0; i < caps.length; i++) if (t >= caps[i][0]) txt = caps[i][1];
+    if (t > 18.8) txt = '';
+    if (txt) {
+      if (capEl.textContent !== txt) { capEl.classList.remove('on'); setTimeout(function () { capEl.textContent = txt; capEl.classList.add('on'); }, 150); }
+      else capEl.classList.add('on');
+    } else capEl.classList.remove('on');
+  });
+
+  /* ---------- Letter ---------- */
+  var L = [
+    ['title', 'To My Unexpected Precious Gift, Kaviya ♡'],
+    ['epi', 'Some friendships are never planned; they simply find their way into our lives.'],
+    ['st', "I never expected to find someone like you,\nSomeone who would make ordinary moments feel new.\nYou came into my life when I least expected a gift,\nAnd without even knowing, you gave my world a lift."],
+    ['st', "We met in days when life wasn't kind,\nWith countless struggles occupying our minds.\nBut little did we know, through all the days we'd go,\nA beautiful friendship would begin to grow."],
+    ['st', "I was new to this world called friendship,\nNot knowing how to express, not knowing how to begin.\nWhile I stayed silent, you took the lead,\nYou initiated the things I didn't know I would need."],
+    ['st', "I watched, I admired, I slowly understood,\n\"Oh, so this is what real friendship feels like… this is good.\"\nYou taught me things without even trying,\nAnd made me realise that friendship is worth holding on to, even when we're crying."],
+    ['st', "We've had misunderstandings, more than a few,\nTimes when I couldn't understand you, and you couldn't understand me too.\nWe've seen moments when things didn't feel right,\nWhen silence grew longer and words turned into fights."],
+    ['st', "But somehow, after every storm and every tide,\nWe found our way back, keeping our bond alive.\nAs if nothing else mattered, as if nothing could stay,\nMore important than the friendship we never let slip away."],
+    ['st', "You had a thousand reasons to walk away,\nMy silence, my delayed replies, the things I couldn't say.\nThe calls I never made, the conversations I couldn't start,\nThe way I sometimes fail to express what's inside my heart."],
+    ['st', "Yet, despite all those reasons, you decided to stay,\nAnd perhaps that's what true friendship does in its own beautiful way.\nIt doesn't always demand perfect words or perfect replies,\nSometimes it simply stays, even through difficult times."],
+    ['st', "And then there's me, the professional overthinker,\nCreating endless questions, becoming my own overthinker's thinker.\nI think about you more than you probably know,\nWorry about you, wonder about you, wherever you go."],
+    ['st', "I create scenarios that never even happen,\nSometimes misunderstand your words, your actions, your reactions.\nI see things differently, sometimes take things to heart,\nAnd even the smallest things can tear my thoughts apart."],
+    ['st', "Yes, I get hurt too, and sometimes I feel low,\nBut then I remember the little moments we share and suddenly let those feelings go.\nOne simple text, one memory, one conversation with you,\nAnd somehow my mind feels fresh, like everything is new."],
+    ['st', "Maybe I've become a little too attached to your presence,\nTo our random talks and your everyday essence.\nPerhaps I've grown addicted to the little things we share,\nBecause somewhere along the way, I started caring more than I could ever declare."],
+    ['st', "And Kaviya, for every time I've hurt you,\nFor every moment my words or actions made you feel blue,\nFor every time I failed to understand or made things harder for you,\nI'm genuinely sorry. I never wanted to hurt you."],
+    ['st', "I know I'm not always the easiest person to understand,\nSometimes my thoughts get tangled, and I struggle to take a stand.\nI may not express my feelings in the perfect way,\nBut please know that I never meant to push you away."],
+    ['st', "I don't want a perfect friendship, nor a perfect you,\nI just want a friendship where we can always be true.\nBe happy around me, be sad when you need to,\nLaugh, cry, complain, be crazy, just be YOU."],
+    ['st', "You don't have to pretend, you don't have to hide,\nYou can share your happiness or the tears you keep inside.\nI want to see you smiling, but on your difficult days too,\nI want you to know there's space for the real you."],
+    ['st', "I wish you happiness beyond what words can explain,\nSuccess that makes every struggle feel worthwhile again.\nMay you achieve every dream you've held so tight,\nAnd may your future be filled with endless light."],
+    ['st', "We've talked about so many things, and there's still so much more,\nA thousand random conversations waiting behind another door.\nMore gossip, more laughter, more memories to create,\nMore little arguments that we'll hopefully laugh about later."],
+    ['st', "And one thing I quietly wish from my heart,\nIs that this friendship never falls apart.\nLet time change everything, let life take us far,\nBut may we always remember how special these moments are."],
+    ['st', "And there's one dream of yours I always want to see,\nThe IAS officer you dream of becoming, proudly standing there, finally free.\nI hope one day your dream becomes your reality,\nAnd when you stand in that position with pride and dignity,"],
+    ['st', "I may not have many words to say,\nBut I'll proudly stand there and salute you someday.\nNot just for the officer you've become,\nBut for the girl who never stopped dreaming, no matter what came."],
+    ['st strong', 'And finally, on your special day,'],
+    ['st big', 'Happy Birthday, Kaviya! ❤️'],
+    ['st', "You are one of the most unexpected and precious gifts life has given me.\nI don't know what tomorrow holds, how much life will change, or where our paths will lead.\nBut I genuinely hope that, through all those changes, we never become strangers."],
+    ['st', "Thank you for initiating when I stayed silent.\nThank you for understanding when I couldn't explain.\nThank you for staying when you had reasons to leave.\nAnd most importantly, thank you for being YOU."],
+    ['st', "Stay strong. Keep smiling. Keep dreaming. Keep achieving.\nNever lose the beautiful person you are."],
+    ['st strong', "And remember, Kannama, somewhere in this world, there's a friend who genuinely wishes to see you happy, successful and smiling."],
+    ['st sign', 'With endless memories, countless unsaid words, and a friendship I hope lasts a lifetime.'],
+    ['st strong', 'Your friend, always. ♡']
+  ];
+  var paper = $('#paper'), skipping = false, typing = false;
+  function buildEl(b) {
+    var el = document.createElement('div');
+    if (b[0] === 'title') el.className = 'l-title';
+    else if (b[0] === 'epi') el.className = 'l-epi';
+    else el.className = b[0];
+    return el;
+  }
+  async function typeLetter() {
+    typing = true; skipping = false;
+    $('#skipType').hidden = false;
+    var caret = document.createElement('span'); caret.className = 'caret';
+    for (var i = 0; i < L.length; i++) {
+      var el = buildEl(L[i]); paper.appendChild(el);
+      var text = L[i][1];
+      if (skipping || reduce) { el.textContent = text; continue; }
+      el.appendChild(caret);
+      var buf = '';
+      for (var k = 0; k < text.length; k++) {
+        if (skipping) { buf = text; break; }
+        buf += text[k];
+        caret.previousSibling && caret.previousSibling.nodeType === 3 ? (caret.previousSibling.nodeValue = buf) : el.insertBefore(document.createTextNode(buf), caret);
+        var ch = text[k];
+        if (ch === '\n') { caret.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(260); }
+        else if (ch === ',' ) await sleep(70);
+        else if (ch === '.' || ch === '…') await sleep(140);
+        else if (k % 2) await sleep(14);
+      }
+      el.textContent = text;
+      if (!skipping) { await sleep(420); }
+    }
+    typing = false;
+    $('#skipType').hidden = true; $('#afterLetter').hidden = false;
+    setTimeout(function () { $('#afterLetter').scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 200);
+  }
+  $('#skipType').addEventListener('click', function () { skipping = true; });
+  $('#openLetter').addEventListener('click', async function () {
+    this.disabled = true; this.style.opacity = .4;
+    $('#env').classList.add('open');
+    await sleep(reduce ? 50 : 1100);
+    $('#envWrap').classList.add('gone');
+    await sleep(reduce ? 50 : 500);
+    $('#envWrap').hidden = true;
+    paper.hidden = false; paper.innerHTML = '';
+    typeLetter();
+  });
+
+  /* ---------- Reasons ---------- */
+  var reasons = [
+    ['Your Presence', 'You arrived when I least expected, and ordinary moments started to feel new.'],
+    ['Your Craziness', 'Laugh, cry, complain, be crazy. I would not change a bit of it.'],
+    ['Your Friendship', 'You took the lead when I stayed silent, and showed me what real friendship feels like.'],
+    ['Your Little Things', 'I have grown addicted to the little things we share.'],
+    ['Your Random Conversations', 'A thousand random talks, and a thousand more waiting behind another door.'],
+    ['Your Innocent Side', 'The pure, unfiltered you that never needs to pretend with me.'],
+    ['The Way You Care', 'You had a thousand reasons to walk away, and you stayed.'],
+    ['Your Dreams and Ambitions', 'The girl who never stopped dreaming. I will salute you someday, Officer Kaviya.'],
+    ['Your Imperfections', 'I do not want a perfect friendship, nor a perfect you. Just you.'],
+    ['You Make Life a Little More Beautiful', 'One text, one memory, one conversation with you, and everything feels new.'],
+    ['The Comfort of Being Yourself', 'No pretending, no hiding. There is always space for the real you.'],
+    ['Simply Because You’re You', 'No list is long enough. Thank you for being YOU.']
+  ];
+  var cardsEl = $('#cards'), found = 0;
+  reasons.forEach(function (r) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'flip'; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<div class="in"><div class="face front"><span class="orn">✦</span><h3></h3></div><div class="face back"></div></div>';
+    b.querySelector('h3').textContent = r[0]; b.querySelector('.back').textContent = r[1];
+    b.addEventListener('click', function () {
+      var wasOn = b.classList.contains('on');
+      b.classList.toggle('on'); b.setAttribute('aria-pressed', String(!wasOn));
+      if (!wasOn && !b.dataset.seen) {
+        b.dataset.seen = '1'; found++;
+        $('#found').textContent = found + ' of 12 found';
+        var rc = b.getBoundingClientRect(); burst(rc.left + rc.width / 2, rc.top + rc.height / 2, 14);
+        if (found === 12) { $('#found').textContent = 'You found all 12 ✦'; $('#afterReasons').hidden = false; setTimeout(function () { $('#afterReasons').scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 700); }
+      }
+    });
+    cardsEl.appendChild(b);
+  });
+
+  /* ---------- Gift ---------- */
+  var box = $('#giftBox'), opened = false;
+  function bigBurst() {
+    var w = innerWidth, h = innerHeight;
+    burst(w * .5, h * .4, 120); setTimeout(function () { burst(w * .2, h * .5, 70); burst(w * .8, h * .5, 70); }, 250);
+    setTimeout(function () { burst(w * .5, h * .3, 90); }, 700);
+  }
+  box.addEventListener('click', function () {
+    if (opened) return; opened = true;
+    box.classList.add('open'); $('#giftHint').hidden = true; setTrack('friend');
+    var r = box.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + 20, 100);
+    setTimeout(function () { bigBurst(); $('#wish').hidden = false; box.hidden = true; $('#giftTitle').hidden = true; window.scrollTo({ top: 0, behavior: 'smooth' }); }, 700);
+  });
+  $('#confettiAgain').addEventListener('click', bigBurst);
+  $('#replayAll').addEventListener('click', function () { location.reload(); });
+
+  show('lock');
+})();
+</script>
+
+</body>
+</html>
